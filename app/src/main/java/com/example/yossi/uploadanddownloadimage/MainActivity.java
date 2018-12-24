@@ -27,13 +27,14 @@ import java.io.File;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-     Button btn;
+     Button btn,btnAll;
      StorageReference mStorageRef;
      DatabaseReference databaseReference;
      ProgressDialog progressDialog;
      Uri imageUri;
 
      ImageView iv;
+     String downloadUrl;
 
 
      static final int PICK_IMAGE_REQUEST = 1;
@@ -49,6 +50,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         btn = findViewById(R.id.btn);
         btn.setOnClickListener(this);
+
+        btnAll = findViewById(R.id.btnAll);
+        btnAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(MainActivity.this,AllImagesActivity.class);
+                startActivity(intent);
+
+            }
+        });
+
 
         progressDialog = new ProgressDialog(this);
 
@@ -93,33 +106,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         progressDialog.setMessage("uploading image...");
         progressDialog.show();
 
+        //uploading
         fileRef.putFile(imageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
 
                 progressDialog.dismiss();
                 Toast.makeText(MainActivity.this, "upload complete", Toast.LENGTH_SHORT).show();
-                User user = new User("popo",taskSnapshot.getMetadata().getReference().getDownloadUrl().toString());
 
-                String userId = databaseReference.push().getKey();
-                databaseReference.child(userId).setValue(user);
 
-                //-------
-
-                /*String url  = taskSnapshot.getDownloadUrl().toString();
-                Picasso.get().load(url).into(iv);*/
-
-                /*String url = String.valueOf(fileRef.getDownloadUrl().getException());
-                Picasso.get().load(url).into(iv);*/
-
+                //-------download
 
 
                 mStorageRef.child(fileChildId).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                     @Override
                     public void onSuccess(Uri uri) {
                         // Got the download URL for 'users/me/profile.png' in uri
-                        String url = uri.toString();
-                        Picasso.get().load(uri).into(iv);
+                        downloadUrl = uri.toString();
+                        Picasso.get().load(downloadUrl).into(iv);
+
+                        //creating the User object
+                        User user = new User("popo",downloadUrl);
+                        String userId = databaseReference.push().getKey();
+                        databaseReference.child(userId).setValue(user);
+
 
                     }
                 }).addOnFailureListener(new OnFailureListener() {
@@ -132,11 +142,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
 
+
             }
 
 
 
         });
+
 
 
     }
